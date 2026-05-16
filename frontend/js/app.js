@@ -125,8 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Face crop if available
-        // Mocking face URL since we didn't setup static file serving
-        // In reality: document.getElementById('face-preview').src = `http://localhost:5000/static/${data.face_image_path}`;
+        if (data.face_image_path) {
+            document.getElementById('face-preview').src = `http://localhost:5000${data.face_image_path}`;
+        }
     }
 
     function showRawText(rawTextArray) {
