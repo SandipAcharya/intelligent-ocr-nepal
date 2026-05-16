@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: idp_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: idp_nepal
+      MYSQL_USER: idp_user
+      MYSQL_PASSWORD: idp_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: idp_flask_api
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=idp_user
+      - DB_PASSWORD=idp_password
+      - DB_NAME=idp_nepal
+
+volumes:
+  db_data:
