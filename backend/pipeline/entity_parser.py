@@ -20,9 +20,9 @@ class KYCParser:
             self.nlp = None
 
         self.patterns = {
-            "citizenship_no": r"(?:ना\.प्र\.नं|ना\.प्र\.प\.नं|No\.|Number)\s*[:\-]?\s*([०-९0-9\-/]+)",
+            "citizenship_no": r"(?:ना[\.॰\s]*प्र[\.॰\s]*नं[\.॰\s]*|ना[\.॰\s]*प्र[\.॰\s]*प[\.॰\s]*नं[\.॰\s]*|No\.|Number)\s*[:\-]?\s*([०-९0-9\-/]+)",
             "date_of_birth": r"(?:साल|Year)\s*[:\-]?\s*([०-९0-9]{4})\s*(?:महिना|Month)\s*[:\-]?\s*([०-९0-9]{1,2})\s*(?:गते|Day)\s*[:\-]?\s*([०-९0-9]{1,2})",
-            "name": r"(?:नाम थर|Full Name)\s*[:\-]?\s*([^\n]+)",
+            "name": r"(?:नाम\s*थर|Full\s*Name)\s*[:\-]?\s*([^\n]+)",
         }
 
     def parse(self, text_blocks: List[Dict[str, Any]], doc_type: str = 'unknown') -> Dict[str, Any]:
