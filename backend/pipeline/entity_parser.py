@@ -20,9 +20,9 @@ class KYCParser:
             self.nlp = None
 
         self.patterns = {
-            "citizenship_no": r"(?:ना[\.॰\s]*प्र[\.॰\s]*नं[\.॰\s]*|ना[\.॰\s]*प्र[\.॰\s]*प[\.॰\s]*नं[\.॰\s]*|No\.|Number)\s*[:\-]?\s*([०-९0-9\-/]+)",
-            "date_of_birth": r"(?:साल|Year)\s*[:\-]?\s*([०-९0-9]{4})\s*(?:महिना|Month)\s*[:\-]?\s*([०-९0-9]{1,2})\s*(?:गते|Day)\s*[:\-]?\s*([०-९0-9]{1,2})",
-            "name": r"(?:नाम\s*थर|Full\s*Name)\s*[:\-]?\s*([^\n]+)",
+            "citizenship_no": r"(?:ना[\.॰\s]*प्र[\.॰\s]*नं[\.॰\s]*|ना[\.॰\s]*प्र[\.॰\s]*प[\.॰\s]*नं[\.॰\s]*|No\.|Number)\s*[:\-ः]*\s*([०-९0-9\-/]+)",
+            "date_of_birth": r"(?:साल|Year)\s*[:\-ः]*\s*([०-९0-9]{4})\s*(?:महिना|Month)\s*[:\-ः]*\s*([०-९0-9]{1,2})\s*(?:गते|Day)\s*[:\-ः]*\s*([०-९0-9]{1,2})",
+            "name": r"(?:नाम\s*थर|Full\s*Name)\s*[:\-ः]*\s*([^\n]+)",
         }
 
     def parse(self, text_blocks: List[Dict[str, Any]], doc_type: str = 'unknown') -> Dict[str, Any]:
@@ -66,13 +66,15 @@ class KYCParser:
                 parsed_data["last_name"] = " ".join(name_parts[1:])
 
         # Fallback block-by-block parsing if regex misses due to newline splits
-        if not parsed_data["first_name"]:
+        if not parsed_data["first_name"] or parsed_data["first_name"] == "ः":
             for i, block in enumerate(text_blocks):
                 text = block['text'].strip()
                 if "नाम थर" in text or "Full Name" in text:
                     # The name might be in the same block or the next block
-                    if ":" in text and len(text.split(":")) > 1 and text.split(":")[1].strip():
-                        full_name = text.split(":")[1].strip()
+                    # Also replace Visarga with colon for uniform splitting
+                    text_normalized = text.replace("ः", ":")
+                    if ":" in text_normalized and len(text_normalized.split(":")) > 1 and text_normalized.split(":")[1].strip():
+                        full_name = text_normalized.split(":")[1].strip()
                     elif i + 1 < len(text_blocks):
                         full_name = text_blocks[i+1]['text'].strip()
                     else:

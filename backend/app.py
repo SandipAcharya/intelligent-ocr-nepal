@@ -114,7 +114,7 @@ def upload_document():
         parsed_data = entity_parser.parse(text_blocks, doc_type=doc_type)
         parsed_data['document_type'] = doc_type
         if face_path:
-            parsed_data['face_image_path'] = face_path
+            parsed_data['face_image_path'] = f"/api/uploads/{face_filename}"
 
         logger.info(f"Extraction complete. Confidence: {parsed_data.get('confidence_score', 0):.2f}")
         return jsonify({
@@ -144,6 +144,14 @@ def submit_form():
         return jsonify({'message': 'Data verified and submitted successfully'}), 200
     else:
         return jsonify({'error': 'Database insertion failed'}), 500
+
+
+from flask import send_from_directory
+
+@app.route('/api/uploads/<filename>')
+def serve_upload(filename):
+    """Serves the saved artifacts (like cropped faces) to the frontend UI"""
+    return send_from_directory(Config.UPLOAD_FOLDER, filename)
 
 
 if __name__ == '__main__':
