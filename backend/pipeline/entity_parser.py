@@ -20,9 +20,10 @@ class KYCParser:
             self.nlp = None
 
         self.patterns = {
-            "citizenship_no": r"(?:ना[\.॰\s]*प्र[\.॰\s]*नं[\.॰\s]*|ना[\.॰\s]*प्र[\.॰\s]*प[\.॰\s]*नं[\.॰\s]*|No\.|Number)\s*[:\-ः]*\s*([०-९0-9\-/\s]+)",
+            "citizenship_no": r"(?:ना[\.॰\s]*प्र[^\n:]*)[:\-ः]\s*([०-९0-9\-/\s]+)",
             "date_of_birth": r"(?:साल|Year)\s*[:\-ः]*\s*([०-९0-9]{4})\s*(?:महिना|Month)\s*[:\-ः]*\s*([०-९0-9]{1,2})\s*(?:गते|Day)\s*[:\-ः]*\s*([०-९0-9]{1,2})",
             "name": r"(?:नाम\s*थर|Full\s*Name)\s*[:\-ः]*\s*([^\n]+)",
+            "address": r"(?:बासस्थान|नासस्थान|Address)[^\n:]*[:\-ः]\s*([^\n]+(?:(?:\n[^\n:]+){1,3}))",
         }
 
     def parse(self, text_blocks: List[Dict[str, Any]], doc_type: str = 'unknown') -> Dict[str, Any]:
@@ -65,6 +66,11 @@ class KYCParser:
             if len(name_parts) > 0:
                 parsed_data["first_name"] = name_parts[0]
                 parsed_data["last_name"] = " ".join(name_parts[1:])
+
+        # Extract Address
+        addr_match = re.search(self.patterns["address"], full_text, re.IGNORECASE)
+        if addr_match:
+            parsed_data["address"] = addr_match.group(1).replace("\n", ", ").strip()
 
         # Fallback block-by-block parsing if regex misses due to newline splits
         if not parsed_data["first_name"] or parsed_data["first_name"] == "ः":

@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Face crop if available
         if (data.face_image_path) {
-            document.getElementById('face-preview').src = `http://localhost:5000${data.face_image_path}`;
+            document.getElementById('face-preview').src = data.face_image_path;
         }
     }
 
