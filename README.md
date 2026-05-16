@@ -9,6 +9,45 @@ Manual form filling across municipal, financial (KYC), and legal sectors in Nepa
 ## The Hybrid OCR/HTR Solution Architecture
 To resolve these inefficiencies, this system utilizes a highly optimized four-stage deep learning pipeline:
 
+```mermaid
+graph TD
+    A[Raw Input Document Image] --> B[Stage 1: Preprocessing & Perspective Warping]
+    
+    subgraph Stage 1: Alignment
+        B --> B1[YOLOv8 Corner Detection]
+        B1 --> B2[Homography Warping]
+        B2 --> B3[Bilateral Denoising & CLAHE]
+    end
+    
+    B3 --> C[Stage 2: Layout Analysis & Portrait Cropping]
+    
+    subgraph Stage 2: Segmentation
+        C --> C1[PP-StructureV3 Layout Parsing]
+        C --> C2[MTCNN Face Detection]
+        C1 --> C3[Segment Text Blocks & Form Fields]
+        C2 --> C4[Portrait Photo Cropped & Saved]
+    end
+    
+    C3 --> D[Stage 3: Hybrid OCR/HTR Engine]
+    
+    subgraph Stage 3: Recognition
+        D --> D1{Printed vs Handwritten Router}
+        D1 -- Printed Text --> D2[PaddleOCR-VL / PP-OCRv5]
+        D1 -- Handwritten Entries --> D3[TrOCR-Devanagari Fine-tuned]
+        D2 --> D4[Extracted Text Strings]
+        D3 --> D4
+    end
+    
+    D4 --> E[Stage 4: NER & Semantic Mapping]
+    
+    subgraph Stage 4: Post-Processing
+        E --> E1[SpaCy Devanagari NER]
+        E1 --> E2[Extract Key Fields: Name, DOB, Citizenship No.]
+        E2 --> E3[Human-in-the-Loop Web UI Validation]
+        E3 --> E4[(Structured MySQL Database)]
+    end
+```
+
 1. **Document Alignment & Rectification (YOLOv8 + OpenCV)**:
    - Uses YOLOv8 (Corner Detection) to locate the quadrilateral boundaries of the document.
    - Calculates a homography matrix for perspective warping, followed by CLAHE contrast normalization and bilateral filtering to denoise the scanned image.
