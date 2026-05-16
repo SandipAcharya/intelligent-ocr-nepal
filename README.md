@@ -32,7 +32,7 @@ graph TD
     
     subgraph Stage 3: Recognition
         D --> D1{Printed vs Handwritten Router}
-        D1 -- Printed Text --> D2[PaddleOCR-VL / PP-OCRv5]
+        D1 -- Printed Text --> D2[EasyOCR Offline Engine]
         D1 -- Handwritten Entries --> D3[TrOCR-Devanagari Fine-tuned]
         D2 --> D4[Extracted Text Strings]
         D3 --> D4
@@ -42,7 +42,7 @@ graph TD
     
     subgraph Stage 4: Post-Processing
         E --> E1[SpaCy Devanagari NER]
-        E1 --> E2[Extract Key Fields: Name, DOB, Citizenship No.]
+        E1 --> E2[Extract Key Fields: Name, DOB, Citizenship No, age, and everything]
         E2 --> E3[Human-in-the-Loop Web UI Validation]
         E3 --> E4[(Structured MySQL Database)]
     end
@@ -56,8 +56,8 @@ graph TD
    - Parses document layouts into structural blocks.
    - Utilizes a Multi-Task Cascaded Convolutional Network (MTCNN) to automatically detect the owner's portrait, applying a padded bounding box to crop and save the visual asset.
 
-3. **Hybrid Text Recognition Engine (PaddleOCR + TrOCR)**:
-   - **Printed Text Labels**: Routed to a Devanagari-optimized **PaddleOCR-VL** model for high-throughput edge inference.
+3. **Hybrid Text Recognition Engine (EasyOCR + TrOCR)**:
+   - **Printed Text Labels**: Routed to an offline **EasyOCR** model optimized for Devanagari script, bypassing any volatile C++ execution environments.
    - **Handwritten User Entries (HTR)**: Variable cursive fields are processed using a transformer-based **TrOCR** (VisionEncoderDecoderModel), which replaces standard LSTM recurrences with cross-attention mechanisms to resolve complex diacritic spatial shifts without requiring character-level segmentation.
 
 4. **Semantic NER Mapping (SpaCy + Regex)**:

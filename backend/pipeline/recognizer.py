@@ -8,70 +8,69 @@ class HybridRecognizer:
     """
     Hybrid OCR/HTR Engine as specified in the technical architecture.
     
-    Stage 3 of the 4-stage deep learning pipeline:
-      - Printed Text Crops  → PaddleOCR (PP-OCRv5, lang='hi' = Devanagari/Hindi)
-      - Handwritten Crops   → TrOCR (VisionEncoderDecoder Transformer)
+    Stage 3 of the 4-stage deep learning pipeline (100% Offline):
+      - Printed Text Crops  → EasyOCR (lang=['hi', 'en'] = Devanagari/Hindi)
+      - Handwritten Crops   → TrOCR (VisionEncoderDecoder Transformer, local_files_only=True)
     """
     def __init__(self, use_gpu: bool = False):
-        logger.info("Initializing HybridRecognizer...")
+        logger.info("Initializing HybridRecognizer (Offline PyTorch Engine)...")
         self.use_gpu = use_gpu
-        self.paddle_ocr = None
+        self.easy_ocr = None
         self.trocr_processor = None
         self.trocr_model = None
 
-        # 1. Printed Text Engine: PaddleOCR with Devanagari support
-        # NOTE: PaddleOCR uses 'hi' (Hindi) for Devanagari script — not 'devanagari'
+        # 1. Printed Text Engine: EasyOCR with Devanagari support
         try:
-            from paddleocr import PaddleOCR
-            # Suppress PaddleOCR's verbose internal logging
-            import logging as _logging
-            _logging.getLogger("ppocr").setLevel(_logging.ERROR)
-
-            self.paddle_ocr = PaddleOCR(
-                use_angle_cls=True,
-                lang='hi',     # 'hi' = Hindi/Devanagari
-                ocr_version='PP-OCRv4', # Force stable v4 to bypass paddlex/v5 PIR bugs
-            )
-            logger.info("PaddleOCR (Devanagari/hi) initialized successfully.")
+            import easyocr
+            # EasyOCR downloads to ~/.EasyOCR/model once, then runs purely offline
+            self.easy_ocr = easyocr.Reader(['hi', 'en'], gpu=self.use_gpu)
+            logger.info("EasyOCR (Devanagari/hi) initialized successfully.")
+        except ImportError:
+            logger.warning("easyocr module not found. Please run `pip install easyocr`.")
         except Exception as e:
-            logger.warning(f"PaddleOCR failed to load: {e}. Will skip printed OCR.")
+            logger.warning(f"EasyOCR failed to load: {e}. Will skip printed OCR.")
 
         # 2. Handwritten Text Engine: HuggingFace TrOCR
         try:
             import torch
             from transformers import TrOCRProcessor, VisionEncoderDecoderModel
             self.device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
+            
+            # Enforce local_files_only=True so it never makes an HTTP request
             self.trocr_processor = TrOCRProcessor.from_pretrained(
-                'microsoft/trocr-base-handwritten'
+                'microsoft/trocr-base-handwritten',
+                local_files_only=True
             )
             self.trocr_model = VisionEncoderDecoderModel.from_pretrained(
-                'microsoft/trocr-base-handwritten'
+                'microsoft/trocr-base-handwritten',
+                local_files_only=True
             ).to(self.device)
-            logger.info("TrOCR (HTR) initialized successfully.")
+            logger.info("TrOCR (HTR) initialized successfully (Offline Mode).")
         except Exception as e:
-            logger.warning(f"TrOCR could not be loaded (may need internet/first-run download): {e}")
+            logger.warning(f"TrOCR could not be loaded (ensure models are downloaded first): {e}")
 
     def recognize_printed(self, image_path: str) -> List[Dict[str, Any]]:
         """
-        Extracts printed text blocks using PaddleOCR (Devanagari-optimized).
+        Extracts printed text blocks using EasyOCR (Devanagari-optimized).
         Returns a list of {text, confidence, bbox, type} dicts.
         """
-        if self.paddle_ocr is None:
-            logger.warning("PaddleOCR not available, returning empty result.")
+        if self.easy_ocr is None:
+            logger.warning("EasyOCR not available, returning empty result.")
             return []
 
-        results = self.paddle_ocr.ocr(image_path)
+        # EasyOCR readtext returns a list of tuples: (bbox, text, prob)
+        results = self.easy_ocr.readtext(image_path)
         extracted_data = []
 
-        if results and results[0]:
-            for line in results[0]:
-                bbox, (text, confidence) = line
-                extracted_data.append({
-                    "text": text,
-                    "confidence": float(confidence),
-                    "bbox": bbox,
-                    "type": "printed"
-                })
+        for line in results:
+            bbox, text, confidence = line
+            extracted_data.append({
+                "text": text,
+                "confidence": float(confidence),
+                # bbox format in EasyOCR is [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+                "bbox": bbox,
+                "type": "printed"
+            })
         return extracted_data
 
     def recognize_handwritten(self, image_crop: np.ndarray) -> Dict[str, Any]:
@@ -104,7 +103,7 @@ class HybridRecognizer:
     ) -> List[Dict[str, Any]]:
         """
         Orchestrates the routing pipeline:
-        - Printed regions → PaddleOCR
+        - Printed regions → EasyOCR
         - Handwritten regions (identified by layout router) → TrOCR
         """
         results = self.recognize_printed(image_path)
