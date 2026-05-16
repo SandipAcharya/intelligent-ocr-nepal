@@ -41,6 +41,7 @@
                             <option value="citizenship">Nepali Citizenship</option>
                             <option value="national_id">National Identity Card</option>
                             <option value="license">Driving License</option>
+                            <option value="general">General Document (e.g., Marksheet)</option>
                         </select>
                     </div>
 
@@ -102,6 +103,15 @@
                             <button type="submit" class="btn success-btn" id="submit-btn">Verify & Submit ✅</button>
                         </div>
                     </form>
+
+                    <!-- Raw Text State for General Documents -->
+                    <div id="raw-text-container" class="hidden">
+                        <div class="form-group">
+                            <label for="raw-text-output">Extracted Text (Ready to Copy)</label>
+                            <textarea id="raw-text-output" class="glass-input" rows="15" readonly style="resize: vertical; font-family: monospace;"></textarea>
+                        </div>
+                        <button type="button" class="btn primary-btn" id="copy-text-btn" style="width: 100%;">Copy to Clipboard 📋</button>
+                    </div>
 
                     <!-- Initial State -->
                     <div id="empty-state" class="empty-state">

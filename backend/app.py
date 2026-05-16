@@ -104,8 +104,8 @@ def upload_document():
         else:
             logger.warning("OCR engine unavailable – returning empty extraction.")
 
-        # Stage 4: Named Entity Recognition
-        parsed_data = entity_parser.parse(text_blocks)
+        # Stage 4: Named Entity Recognition / Dynamic Extraction
+        parsed_data = entity_parser.parse(text_blocks, doc_type=doc_type)
         parsed_data['document_type'] = doc_type
         if face_path:
             parsed_data['face_image_path'] = face_path

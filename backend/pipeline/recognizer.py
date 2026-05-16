@@ -23,11 +23,14 @@ class HybridRecognizer:
         # NOTE: PaddleOCR uses 'hi' (Hindi) for Devanagari script — not 'devanagari'
         try:
             from paddleocr import PaddleOCR
+            # Suppress PaddleOCR's verbose internal logging
+            import logging as _logging
+            _logging.getLogger("ppocr").setLevel(_logging.ERROR)
+
             self.paddle_ocr = PaddleOCR(
                 use_angle_cls=True,
-                lang='hi',           # 'hi' = Hindi/Devanagari in PaddleOCR
+                lang='hi',     # 'hi' = Hindi/Devanagari in PaddleOCR 3.x
                 use_gpu=use_gpu,
-                show_log=False
             )
             logger.info("PaddleOCR (Devanagari/hi) initialized successfully.")
         except Exception as e:

@@ -24,9 +24,9 @@ class KYCParser:
             "date_of_birth": r"(?:जन्म मिति|DOB|Date of Birth)\s*[:\-]?\s*([\d]{4}[/-][\d]{1,2}[/-][\d]{1,2})",
         }
 
-    def parse(self, text_blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def parse(self, text_blocks: List[Dict[str, Any]], doc_type: str = 'unknown') -> Dict[str, Any]:
         """
-        Parses raw text blocks to map to administrative fields.
+        Parses raw text blocks to map to administrative fields based on doc_type.
         """
         full_text = " ".join([block['text'] for block in text_blocks])
         

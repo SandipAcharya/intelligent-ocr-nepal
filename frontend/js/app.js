@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
     const loadingSpinner = document.getElementById('loading-spinner');
     const kycForm = document.getElementById('kyc-form');
+    const rawTextContainer = document.getElementById('raw-text-container');
+    const rawTextOutput = document.getElementById('raw-text-output');
+    const copyTextBtn = document.getElementById('copy-text-btn');
     const submitBtn = document.getElementById('submit-btn');
     
     let selectedFile = null;
@@ -53,8 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!selectedFile) return;
 
         // UI Updates
+        // UI Updates
         emptyState.classList.add('hidden');
         kycForm.classList.add('hidden');
+        if (rawTextContainer) rawTextContainer.classList.add('hidden');
         loadingSpinner.classList.remove('hidden');
         extractBtn.disabled = true;
 
@@ -72,7 +77,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             
             if(response.ok) {
-                populateForm(result.data);
+                if (result.data && result.data.document_type === 'general') {
+                    showRawText(result.raw_text);
+                } else {
+                    populateForm(result.data);
+                }
             } else {
                 alert('Extraction Failed: ' + result.error);
                 emptyState.classList.remove('hidden');
@@ -118,6 +127,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // Face crop if available
         // Mocking face URL since we didn't setup static file serving
         // In reality: document.getElementById('face-preview').src = `http://localhost:5000/static/${data.face_image_path}`;
+    }
+
+    function showRawText(rawTextArray) {
+        if (rawTextContainer) {
+            rawTextContainer.classList.remove('hidden');
+            rawTextOutput.value = rawTextArray.join('\n');
+            
+            // Update confidence badge
+            const badge = document.getElementById('confidence-badge');
+            badge.textContent = `General Extraction`;
+            badge.className = 'badge high';
+        }
+    }
+
+    if (copyTextBtn) {
+        copyTextBtn.addEventListener('click', () => {
+            rawTextOutput.select();
+            document.execCommand('copy');
+            copyTextBtn.textContent = 'Copied! ✅';
+            setTimeout(() => {
+                copyTextBtn.textContent = 'Copy to Clipboard 📋';
+            }, 2000);
+        });
     }
 
     // Submit Action
