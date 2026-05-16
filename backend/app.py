@@ -1,4 +1,6 @@
 import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["FLAGS_use_mkldnn"] = "0"
 import cv2
 import logging
 from flask import Flask, request, jsonify, send_from_directory
