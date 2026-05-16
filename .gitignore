@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+env/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# PaddleOCR & TrOCR model cache
+.paddleocr/
+*.pdparams
+*.pdopt
+*.pdmodel
+
+# Uploaded document images (sensitive KYC data)
+backend/uploads/
+
+# SQLite local database
+backend/database/*.db
+
+# Environment files
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
