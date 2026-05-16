@@ -38,12 +38,20 @@ class HybridRecognizer:
             model_id = 'paudelanil/trocr-devanagari-2'
             try:
                 # First try strictly offline to prevent network delays
-                self.trocr_processor = TrOCRProcessor.from_pretrained(model_id, local_files_only=True)
+                # Workaround for missing preprocessor_config in fine-tuned model:
+                # Compose the processor from base image processor and custom tokenizer
+                from transformers import AutoTokenizer, ViTImageProcessor
+                tokenizer = AutoTokenizer.from_pretrained(model_id, local_files_only=True)
+                feature_extractor = ViTImageProcessor.from_pretrained('microsoft/trocr-base-handwritten', local_files_only=True)
+                self.trocr_processor = TrOCRProcessor(image_processor=feature_extractor, tokenizer=tokenizer)
                 self.trocr_model = VisionEncoderDecoderModel.from_pretrained(model_id, local_files_only=True).to(self.device)
                 logger.info(f"TrOCR ({model_id}) loaded successfully from local cache.")
             except Exception:
                 logger.info(f"Downloading {model_id} from HuggingFace for the first time. This may take a minute...")
-                self.trocr_processor = TrOCRProcessor.from_pretrained(model_id, local_files_only=False)
+                from transformers import AutoTokenizer, ViTImageProcessor
+                tokenizer = AutoTokenizer.from_pretrained(model_id, local_files_only=False)
+                feature_extractor = ViTImageProcessor.from_pretrained('microsoft/trocr-base-handwritten', local_files_only=False)
+                self.trocr_processor = TrOCRProcessor(image_processor=feature_extractor, tokenizer=tokenizer)
                 self.trocr_model = VisionEncoderDecoderModel.from_pretrained(model_id, local_files_only=False).to(self.device)
                 logger.info("TrOCR downloaded and cached successfully for future offline use.")
         except Exception as e:
