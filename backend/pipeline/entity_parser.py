@@ -20,15 +20,17 @@ class KYCParser:
             self.nlp = None
 
         self.patterns = {
-            "citizenship_no": r"(?:नागरिकता|ना\.प्र\.प\.नं|No\.|Number)\s*[:\-]?\s*([\d\-/]+)",
-            "date_of_birth": r"(?:जन्म मिति|DOB|Date of Birth)\s*[:\-]?\s*([\d]{4}[/-][\d]{1,2}[/-][\d]{1,2})",
+            "citizenship_no": r"(?:ना\.प्र\.नं|ना\.प्र\.प\.नं|No\.|Number)\s*[:\-]?\s*([०-९0-9\-/]+)",
+            "date_of_birth": r"(?:साल|Year)\s*[:\-]?\s*([०-९0-9]{4})\s*(?:महिना|Month)\s*[:\-]?\s*([०-९0-9]{1,2})\s*(?:गते|Day)\s*[:\-]?\s*([०-९0-9]{1,2})",
+            "name": r"(?:नाम थर|Full Name)\s*[:\-]?\s*([^\n]+)",
         }
 
     def parse(self, text_blocks: List[Dict[str, Any]], doc_type: str = 'unknown') -> Dict[str, Any]:
         """
         Parses raw text blocks to map to administrative fields based on doc_type.
         """
-        full_text = " ".join([block['text'] for block in text_blocks])
+        # Join text with newlines so regex can match until end of line
+        full_text = "\n".join([block['text'] for block in text_blocks])
         
         parsed_data = {
             "first_name": "",
@@ -42,30 +44,45 @@ class KYCParser:
         if text_blocks:
             parsed_data["confidence_score"] = sum([b['confidence'] for b in text_blocks]) / len(text_blocks)
 
-        # 1. RegEx Heuristics
+        # Extract Citizenship No
         cit_match = re.search(self.patterns["citizenship_no"], full_text)
         if cit_match:
             parsed_data["citizenship_no"] = cit_match.group(1).strip()
             
+        # Extract DOB (combining year, month, day if matched)
         dob_match = re.search(self.patterns["date_of_birth"], full_text)
         if dob_match:
-            parsed_data["date_of_birth"] = dob_match.group(1).strip()
+            parsed_data["date_of_birth"] = f"{dob_match.group(1)}-{dob_match.group(2)}-{dob_match.group(3)}"
 
-        # 2. SpaCy NER for Names & Addresses
-        if self.nlp:
-            doc = self.nlp(full_text)
-            for ent in doc.ents:
-                if ent.label_ == "PERSON" and not parsed_data["first_name"]:
-                    name_parts = ent.text.split()
-                    parsed_data["first_name"] = name_parts[0]
-                    if len(name_parts) > 1:
-                        parsed_data["last_name"] = " ".join(name_parts[1:])
-                elif ent.label_ == "GPE" and not parsed_data["address"]:
-                    parsed_data["address"] = ent.text
+        # Extract Name
+        name_match = re.search(self.patterns["name"], full_text)
+        if name_match:
+            full_name = name_match.group(1).strip()
+            # Clean up trailing artifacts
+            full_name = re.sub(r'लिङ्ग.*', '', full_name).strip()
+            name_parts = full_name.split()
+            if len(name_parts) > 0:
+                parsed_data["first_name"] = name_parts[0]
+                parsed_data["last_name"] = " ".join(name_parts[1:])
 
-        # Mock fallback
+        # Fallback block-by-block parsing if regex misses due to newline splits
         if not parsed_data["first_name"]:
-            parsed_data["first_name"] = "Sandip"
-            parsed_data["last_name"] = "Acharya"
+            for i, block in enumerate(text_blocks):
+                text = block['text'].strip()
+                if "नाम थर" in text or "Full Name" in text:
+                    # The name might be in the same block or the next block
+                    if ":" in text and len(text.split(":")) > 1 and text.split(":")[1].strip():
+                        full_name = text.split(":")[1].strip()
+                    elif i + 1 < len(text_blocks):
+                        full_name = text_blocks[i+1]['text'].strip()
+                    else:
+                        continue
+                        
+                    full_name = re.sub(r'लिङ्ग.*', '', full_name).strip()
+                    name_parts = full_name.split()
+                    if name_parts:
+                        parsed_data["first_name"] = name_parts[0]
+                        parsed_data["last_name"] = " ".join(name_parts[1:])
+                    break
 
         return parsed_data
