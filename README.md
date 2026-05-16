@@ -98,7 +98,7 @@ pip install -r backend/requirements.txt
 # 3. Start the Inference Server
 python backend/app.py
 ```
-*Note: PaddleOCR and TrOCR model weights will be automatically downloaded from HuggingFace/Paddle repositories on initial runtime.*
+*Note:TrOCR model weights will be automatically downloaded from HuggingFace/Paddle repositories on initial runtime.*
 
 ### 2. Frontend Interface
 Open `frontend/index.html` directly in any modern browser, or run a local python HTTP server:
