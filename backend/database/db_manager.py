@@ -1,26 +1,40 @@
-import mysql.connector
-from mysql.connector import Error
+import sqlite3
 import os
 
 class DBManager:
     def __init__(self):
-        self.host = os.getenv('DB_HOST', 'localhost')
-        self.user = os.getenv('DB_USER', 'idp_user')
-        self.password = os.getenv('DB_PASSWORD', 'idp_password')
-        self.database = os.getenv('DB_NAME', 'idp_nepal')
+        # We use a local SQLite database for easy testing without Docker
+        self.db_path = os.path.join(os.path.dirname(__file__), 'idp_nepal.db')
+        self.init_db()
         
     def get_connection(self):
         try:
-            connection = mysql.connector.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                database=self.database
-            )
+            connection = sqlite3.connect(self.db_path)
             return connection
-        except Error as e:
-            print(f"Error connecting to MySQL: {e}")
+        except Exception as e:
+            print(f"Error connecting to SQLite: {e}")
             return None
+
+    def init_db(self):
+        conn = self.get_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS extracted_documents (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    document_type TEXT NOT NULL,
+                    first_name TEXT,
+                    last_name TEXT,
+                    citizenship_no TEXT,
+                    date_of_birth TEXT,
+                    address TEXT,
+                    face_image_path TEXT,
+                    confidence_score REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            conn.commit()
+            conn.close()
 
     def insert_document_record(self, data):
         conn = self.get_connection()
@@ -31,7 +45,7 @@ class DBManager:
         query = """
             INSERT INTO extracted_documents 
             (document_type, first_name, last_name, citizenship_no, date_of_birth, address, face_image_path, confidence_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         values = (
             data.get('document_type', 'unknown'),
@@ -47,10 +61,9 @@ class DBManager:
             cursor.execute(query, values)
             conn.commit()
             return True
-        except Error as e:
+        except Exception as e:
             print(f"Error inserting record: {e}")
             return False
         finally:
-            if conn.is_connected():
-                cursor.close()
+            if conn:
                 conn.close()
