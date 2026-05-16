@@ -58,7 +58,7 @@ graph TD
 
 3. **Hybrid Text Recognition Engine (EasyOCR + TrOCR)**:
    - **Printed Text Labels**: Routed to an offline **EasyOCR** model optimized for Devanagari script, bypassing any volatile C++ execution environments.
-   - **Handwritten User Entries (HTR)**: Variable cursive fields are processed using a transformer-based **TrOCR** (VisionEncoderDecoderModel), which replaces standard LSTM recurrences with cross-attention mechanisms to resolve complex diacritic spatial shifts without requiring character-level segmentation.
+   - **Handwritten User Entries (HTR)**: Variable cursive fields are processed using a transformer-based **TrOCR** (fine-tuned specifically for Nepali: `paudelanil/trocr-devanagari-2`), which replaces standard LSTM recurrences with cross-attention mechanisms to resolve complex diacritic spatial shifts without requiring character-level segmentation.
 
 4. **Semantic NER Mapping (SpaCy + Regex)**:
    - Passes raw string outputs into a custom SpaCy Named Entity Recognition pipeline to map variables into strict database entities (`FIRST_NAME`, `LAST_NAME`, `CITIZENSHIP_NO`).

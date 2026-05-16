@@ -35,19 +35,19 @@ class HybridRecognizer:
             import torch
             from transformers import TrOCRProcessor, VisionEncoderDecoderModel
             self.device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
-            
-            # Enforce local_files_only=True so it never makes an HTTP request
-            self.trocr_processor = TrOCRProcessor.from_pretrained(
-                'microsoft/trocr-base-handwritten',
-                local_files_only=True
-            )
-            self.trocr_model = VisionEncoderDecoderModel.from_pretrained(
-                'microsoft/trocr-base-handwritten',
-                local_files_only=True
-            ).to(self.device)
-            logger.info("TrOCR (HTR) initialized successfully (Offline Mode).")
+            model_id = 'paudelanil/trocr-devanagari-2'
+            try:
+                # First try strictly offline to prevent network delays
+                self.trocr_processor = TrOCRProcessor.from_pretrained(model_id, local_files_only=True)
+                self.trocr_model = VisionEncoderDecoderModel.from_pretrained(model_id, local_files_only=True).to(self.device)
+                logger.info(f"TrOCR ({model_id}) loaded successfully from local cache.")
+            except Exception:
+                logger.info(f"Downloading {model_id} from HuggingFace for the first time. This may take a minute...")
+                self.trocr_processor = TrOCRProcessor.from_pretrained(model_id, local_files_only=False)
+                self.trocr_model = VisionEncoderDecoderModel.from_pretrained(model_id, local_files_only=False).to(self.device)
+                logger.info("TrOCR downloaded and cached successfully for future offline use.")
         except Exception as e:
-            logger.warning(f"TrOCR could not be loaded (ensure models are downloaded first): {e}")
+            logger.warning(f"TrOCR could not be loaded: {e}")
 
     def recognize_printed(self, image_path: str) -> List[Dict[str, Any]]:
         """
