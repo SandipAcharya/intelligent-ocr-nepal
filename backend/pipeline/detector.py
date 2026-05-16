@@ -13,7 +13,7 @@ class DocumentDetector:
     """
     def __init__(self):
         logger.info("Initializing DocumentDetector (MTCNN & YOLOv8 integration)...")
-        self.face_detector = MTCNN()
+        self.face_detector = MTCNN(device="CPU:0")
         
         # YOLOv8 model placeholder
         # self.yolo_model = YOLO('models/yolov8_corner_detector.pt')
