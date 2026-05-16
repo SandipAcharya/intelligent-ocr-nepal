@@ -29,7 +29,8 @@ class HybridRecognizer:
 
             self.paddle_ocr = PaddleOCR(
                 use_angle_cls=True,
-                lang='hi',     # 'hi' = Hindi/Devanagari in PaddleOCR 3.x
+                lang='hi',     # 'hi' = Hindi/Devanagari
+                ocr_version='PP-OCRv4', # Force stable v4 to bypass paddlex/v5 PIR bugs
             )
             logger.info("PaddleOCR (Devanagari/hi) initialized successfully.")
         except Exception as e:
