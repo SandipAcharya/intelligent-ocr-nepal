@@ -98,14 +98,14 @@ pip install -r backend/requirements.txt
 # 3. Start the Inference Server
 python backend/app.py
 ```
-*Note:TrOCR model weights will be automatically downloaded from HuggingFace/Paddle repositories on initial runtime.*
+1.  **Initialize the IDP Engine**:
+    ```bash
+    python backend/app.py
+    ```
+*Note: AI model weights will be automatically downloaded and cached locally on initial runtime.*
 
-### 2. Frontend Interface
-Open `frontend/index.html` directly in any modern browser, or run a local python HTTP server:
-```bash
-python -m http.server 8080 -d frontend
-```
-Visit `http://localhost:8080` to access the Human-in-the-Loop validation UI.
+### 2. Access the Interface
+Visit `http://localhost:5000` to access the professional glassmorphic UI. The Flask server handles both the API and the static frontend assets.
 
 ### 3. Production Deployment (Docker Compose)
 ```bash
