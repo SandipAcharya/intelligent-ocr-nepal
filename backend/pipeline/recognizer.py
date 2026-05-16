@@ -59,7 +59,7 @@ class HybridRecognizer:
             logger.warning("PaddleOCR not available, returning empty result.")
             return []
 
-        results = self.paddle_ocr.ocr(image_path, cls=True)
+        results = self.paddle_ocr.ocr(image_path)
         extracted_data = []
 
         if results and results[0]:
