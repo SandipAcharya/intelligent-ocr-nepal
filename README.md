@@ -1,5 +1,7 @@
 # Intelligent Document Processing (IDP) - Nepal
 **Automated KYC & Form Filling Architecture for Complex Devanagari Scripts**
+## 📖 Detailed Case Stud
+[Why Nepali OCR is Brutally Hard (And How We Finally Solved It)](https://medium.com/@acharyasandip137/why-nepali-ocr-is-brutally-hard-and-how-we-finally-solved-it-1e740a86f8a6)**
 
 This repository contains the end-to-end implementation of a high-fidelity **Intelligent Document OCR and Automated Form-Filling Engine**. It is specifically architected to process standard Nepali credentials (Nepali Citizenship/Nagarikta, National Identity Card, Driving License) addressing the orthographic and layout complexities of the Devanagari script.
 
